@@ -1,0 +1,47 @@
+buildscript {
+	ext {
+		springBootVersion = "1.4.7.RELEASE"
+	}
+	repositories {
+		// mavenCentral()
+		maven { url "http://127.0.0.1:8082/nexus/content/groups/public/"} 
+		// maven {url "http://maven.aliyun.com/nexus/content/groups/public/"}
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: "java"
+apply plugin: "eclipse"
+apply plugin: "org.springframework.boot"
+
+group = "com.clover"
+version = "0.0.1-SNAPSHOT"
+sourceCompatibility = 1.8
+
+repositories {
+	// mavenCentral()
+	maven { url "http://127.0.0.1:8082/nexus/content/groups/public/"} 
+	//maven {url "http://maven.aliyun.com/nexus/content/groups/public/"}
+}
+
+sourceSets{
+	main{
+		java{srcDirs = ["src/main/java"]}
+		resources{srcDirs = ["src/main/resources"]}
+	}
+	test{
+		java{srcDirs=["src/test/main"]}
+    }
+}
+
+configurations{
+	// 在整个构建过程中排除ch.qos.logback:logback-classic
+	all*.exclude group: "ch.qos.logback", module: "logback-classic"
+}
+
+dependencies {
+	compile "redis.clients:jedis:2.9.0"
+	compile "com.clover.api:tools:1.0.2-SNAPSHOT"
+}
