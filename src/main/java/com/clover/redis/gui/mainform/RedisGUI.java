@@ -4,12 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.PopupMenu;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -74,27 +77,26 @@ public class RedisGUI {
 		menubar.add(options);
 		frame.setJMenuBar(menubar);
 
-		// 左侧面板
-		JPanel dbPanel = new JPanel();
-		dbPanel.setBorder(new LineBorder(Color.WHITE, 5));
-		dbPanel.setBackground(Color.RED);
-		frame.getContentPane().add(dbPanel, BorderLayout.WEST);
-		dbPanel.setLayout(new BorderLayout(0, 0));
-		
-		// 左侧面板滚动
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setViewportBorder(new LineBorder(Color.WHITE, 5));
-		dbPanel.add(scrollPane, BorderLayout.CENTER);
+		// 左侧redis server面板
+		JPanel redisServerPannel = new JPanel();
+		redisServerPannel.setBorder(new LineBorder(Color.WHITE, 5));
+		redisServerPannel.setBackground(Color.WHITE);
 
-		dbPanel.addMouseMotionListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				 System.out.println("clicked");
+		// JPanel增加鼠标右键菜单
+		JPopupMenu popMenu = new JPopupMenu();
+		JMenuItem addMenuItem = new JMenuItem("add");
+		popMenu.add(addMenuItem);
+		popMenu.add(new JMenuItem("del"));
+		redisServerPannel.addMouseListener(new MouseAdapter() {
+			public void mouseReleased(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					popMenu.show(redisServerPannel, e.getX(), e.getY());
+				}
 			}
 		});
-
-		final JList<ListSelectionModel> list = new JList<ListSelectionModel>();
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		scrollPane.setViewportView(list);
+		redisServerPannel.add(popMenu);
+		redisServerPannel.setPreferredSize(new Dimension(200, size.height));
+		frame.getContentPane().add(redisServerPannel, BorderLayout.WEST);
 
 		JPanel colPanel = new JPanel();
 		frame.getContentPane().add(colPanel, BorderLayout.CENTER);
