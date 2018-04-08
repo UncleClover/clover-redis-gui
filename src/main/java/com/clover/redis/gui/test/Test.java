@@ -1,5 +1,7 @@
 package com.clover.redis.gui.test;
 
+import java.util.Set;
+
 import redis.clients.jedis.Jedis;
 
 public class Test {
@@ -10,5 +12,11 @@ public class Test {
 		System.out.println(jedis.ping());
 		System.out.println(jedis.getDB());
 		System.out.println(jedis.configGet("databases").get(1));
+		
+		Set<String> keys = jedis.keys("*");
+		jedis.type("name");
+		System.out.println(keys);
+		
+		System.out.println(jedis.hlen("name"));
 	}
 }

@@ -2,6 +2,9 @@ package com.clover.redis.gui.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import com.clover.redis.gui.model.Keys;
 
 import redis.clients.jedis.Jedis;
 
@@ -71,5 +74,33 @@ public class RedisClient {
 		dbList = jedis.configGet("databases");
 		jedis.close();
 		return Integer.parseInt(dbList.get(1));
+	}
+
+	/**
+	 * 获取key信息
+	 * 
+	 * @author zhangdq
+	 * @Email qiang900714@126.com
+	 * @time 2018年4月8日 下午4:31:59
+	 * @return
+	 */
+	public List<Keys> getKeys() {
+		List<Keys> keyList = new ArrayList<>();
+		Jedis jedis = new Jedis(this.host, this.port);
+		jedis.auth(this.password);
+		Set<String> keys = jedis.keys("*");
+		for (String key : keys) {
+			Keys keyItem = new Keys();
+			keyItem.setKey(key);
+			keyItem.setSize("1");
+			String type = jedis.type(key);
+			keyItem.setType(type);
+			if (type.equals("hash")) {
+				keyItem.setSize(String.valueOf(jedis.hlen(key)));
+			}
+			keyList.add(keyItem);
+		}
+		jedis.close();
+		return keyList;
 	}
 }

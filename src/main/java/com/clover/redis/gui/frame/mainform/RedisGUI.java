@@ -3,11 +3,16 @@ package com.clover.redis.gui.frame.mainform;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -16,15 +21,21 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.LineBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 import com.clover.redis.gui.client.RedisClient;
 import com.clover.redis.gui.frame.ServerDialog;
+import com.clover.redis.gui.model.Keys;
 
 /**
  * redis gui mainform
@@ -89,6 +100,36 @@ public class RedisGUI {
 		redisServerPannel.setPreferredSize(new Dimension(200, size.height));
 		frame.getContentPane().add(redisServerPannel, BorderLayout.WEST);
 
+		JPanel colPanel = new JPanel();
+		frame.getContentPane().add(colPanel, BorderLayout.CENTER);
+		colPanel.setLayout(new GridLayout(2, 1));
+
+		// redis keys
+		final JScrollPane keys = new JScrollPane();
+		colPanel.add(keys);
+
+		DefaultTableModel tableModel = new DefaultTableModel();
+		JTable keysTable = new JTable(tableModel) {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}// 表格不允许被编辑
+		};
+		keysTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		keysTable.setBorder(new LineBorder(SystemColor.BLACK, 1, true));
+		keysTable.setForeground(Color.BLACK);
+		keysTable.setBackground(SystemColor.control);
+		keysTable.setCellSelectionEnabled(false);
+		keysTable.setColumnSelectionAllowed(false);
+
+		final JScrollPane vals = new JScrollPane();
+		colPanel.add(vals);
+
 		// 新增事件
 		addMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -105,33 +146,46 @@ public class RedisGUI {
 				RedisClient redis = RedisClient.getInstance(serverDialog.getServerHost(), port, serverDialog.getServerPassword());
 				int dbNums = redis.getRedisDB();
 				DefaultTreeModel model = (DefaultTreeModel) redisTree.getModel();
-	
-				for(int i = 0; i < dbNums; i++) {
+
+				for (int i = 0; i < dbNums; i++) {
 					DefaultMutableTreeNode redisDbItem = new DefaultMutableTreeNode("db" + i);
 					model.insertNodeInto(redisDbItem, top, i);
 				}
-				
+
 				// 添加到面板
 				redisServerPannel.add(redisTree);
 				redisTree.updateUI();
 				redisTree.expandRow(0);
-				
+
 				redisTree.addTreeSelectionListener(new TreeSelectionListener() {
-					
+
 					@Override
 					public void valueChanged(TreeSelectionEvent paramTreeSelectionEvent) {
-						System.out.println(paramTreeSelectionEvent.getSource());
+						List<Keys> keyList = redis.getKeys();
+						Object[][] cols = new Object[keyList.size()][3];
+						for (int i = 0; i < keyList.size(); i++) {
+							cols[i][0] = keyList.get(i).getKey();
+							cols[i][1] = keyList.get(i).getType();
+							cols[i][2] = keyList.get(i).getSize();
+						}
+						keysTable.setModel(new DefaultTableModel(cols, new String[] { "KEY", "TYPE", "SIZE" }) {
+							/**
+							 * 
+							 */
+							private static final long serialVersionUID = 1L;
+							@SuppressWarnings("rawtypes")
+							Class[] columnTypes = new Class[] { Object.class, Object.class, Object.class, Object.class, Object.class };
+
+							@SuppressWarnings({ "unchecked", "rawtypes" })
+							public Class getColumnClass(int columnIndex) {
+								return columnTypes[columnIndex];
+							}
+						});
+						keys.setViewportView(keysTable);
 					}
 				});
 			}
 		});
-
-		JPanel colPanel = new JPanel();
-		frame.getContentPane().add(colPanel, BorderLayout.CENTER);
-		colPanel.setLayout(new BorderLayout(0, 0));
-
-		final JScrollPane colScrollPanel = new JScrollPane();
-		colPanel.add(colScrollPanel, BorderLayout.CENTER);
 	}
 
 	public static void main(String[] args) {
