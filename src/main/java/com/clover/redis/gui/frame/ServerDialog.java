@@ -14,7 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import com.clover.api.tools.common.utils.StringUtil;
-import com.clover.redis.gui.client.Redis;
+import com.clover.redis.gui.client.RedisClient;
 
 /**
  * 增加redis server弹出框
@@ -67,7 +67,7 @@ public class ServerDialog extends JDialog implements ActionListener {
 		// port
 		add(new JLabel("port"));
 		port = new JTextField(12);
-		port.setText("6379");
+		port.setText("16379");
 		add(port);
 
 		// password
@@ -113,7 +113,8 @@ public class ServerDialog extends JDialog implements ActionListener {
 				return;
 			}
 			setVisible(true);
-			Redis redis = new Redis(this.serverHost, this.serverPort, this.serverPassword);
+			int port = Integer.parseInt(this.serverPort);
+			RedisClient redis = new RedisClient(this.serverHost, port, this.serverPassword);
 			String ping = redis.ping();
 			if (StringUtil.isNotEmpty(ping) && "PONG".equals(ping)) {
 				setVisible(false);

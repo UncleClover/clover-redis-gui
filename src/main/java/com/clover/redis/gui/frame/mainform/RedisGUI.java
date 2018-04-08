@@ -18,9 +18,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.border.LineBorder;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
+import com.clover.redis.gui.client.RedisClient;
 import com.clover.redis.gui.frame.ServerDialog;
 
 /**
@@ -93,13 +96,36 @@ public class RedisGUI {
 				serverDialog.setModal(true);
 				serverDialog.setVisible(true);
 
-				// 获取redis值
-				DefaultMutableTreeNode top = new DefaultMutableTreeNode("127.0.0.1:16379");
-				top.add(new DefaultMutableTreeNode("12111"));
+				// 获取redis服务配置
+				DefaultMutableTreeNode top = new DefaultMutableTreeNode(serverDialog.getServerName());
 				JTree redisTree = new JTree(top);
+
+				// 获取DB
+				int port = Integer.parseInt(serverDialog.getServerPort());
+				RedisClient redis = RedisClient.getInstance(serverDialog.getServerHost(), port, serverDialog.getServerPassword());
+				int dbNums = redis.getRedisDB();
+				DefaultTreeModel model = (DefaultTreeModel) redisTree.getModel();
+	
+				for(int i = 0; i < dbNums; i++) {
+					DefaultMutableTreeNode redisDbItem = new DefaultMutableTreeNode("db" + i);
+					model.insertNodeInto(redisDbItem, top, i);
+				}
+				
+				// 添加到面板
 				redisServerPannel.add(redisTree);
+				redisTree.updateUI();
+				redisTree.expandRow(0);
+				
+				redisTree.addTreeSelectionListener(new TreeSelectionListener() {
+					
+					@Override
+					public void valueChanged(TreeSelectionEvent paramTreeSelectionEvent) {
+						System.out.println(paramTreeSelectionEvent.getSource());
+					}
+				});
 			}
 		});
+
 		JPanel colPanel = new JPanel();
 		frame.getContentPane().add(colPanel, BorderLayout.CENTER);
 		colPanel.setLayout(new BorderLayout(0, 0));
