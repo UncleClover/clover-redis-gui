@@ -77,17 +77,18 @@ public class RedisClient {
 	}
 
 	/**
-	 * 获取key信息
+	 * 获取指定数据库key信息
 	 * 
 	 * @author zhangdq
 	 * @Email qiang900714@126.com
 	 * @time 2018年4月8日 下午4:31:59
 	 * @return
 	 */
-	public List<Keys> getKeys() {
+	public List<Keys> getKeys(int selectedDB) {
 		List<Keys> keyList = new ArrayList<>();
 		Jedis jedis = new Jedis(this.host, this.port);
 		jedis.auth(this.password);
+		jedis.select(selectedDB);
 		Set<String> keys = jedis.keys("*");
 		for (String key : keys) {
 			Keys keyItem = new Keys();

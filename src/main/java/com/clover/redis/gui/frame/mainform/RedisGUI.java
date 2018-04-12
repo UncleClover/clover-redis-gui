@@ -2,6 +2,7 @@ package com.clover.redis.gui.frame.mainform;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.SystemColor;
@@ -10,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -118,7 +121,7 @@ public class RedisGUI {
 
 			public boolean isCellEditable(int row, int column) {
 				return false;
-			}// 表格不允许被编辑
+			}
 		};
 		keysTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		keysTable.setBorder(new LineBorder(SystemColor.BLACK, 1, true));
@@ -161,7 +164,12 @@ public class RedisGUI {
 
 					@Override
 					public void valueChanged(TreeSelectionEvent paramTreeSelectionEvent) {
-						List<Keys> keyList = redis.getKeys();
+						DefaultMutableTreeNode node = (DefaultMutableTreeNode) redisTree.getLastSelectedPathComponent();
+						if(!node.isLeaf() || node.toString().equals(serverDialog.getServerName())) {
+							return;
+						}
+						String selectedDB = node.toString();
+						List<Keys> keyList = redis.getKeys(Integer.parseInt(selectedDB.substring(2)));
 						Object[][] cols = new Object[keyList.size()][3];
 						for (int i = 0; i < keyList.size(); i++) {
 							cols[i][0] = keyList.get(i).getKey();
@@ -181,7 +189,59 @@ public class RedisGUI {
 								return columnTypes[columnIndex];
 							}
 						});
+						
+						
+						keys.remove(keysTable);
 						keys.setViewportView(keysTable);
+						
+						keysTable.addMouseMotionListener(new MouseMotionListener() {
+							
+							@Override
+							public void mouseMoved(MouseEvent e) {
+								int selectRow = keysTable.rowAtPoint(e.getPoint());
+								System.out.println(selectRow);
+								Component comp = keysTable.prepareRenderer(keysTable.getCellRenderer(1, 2), 1, 2);
+								comp.setBackground(Color.RED);
+							}
+							
+							@Override
+							public void mouseDragged(MouseEvent paramMouseEvent) {
+								// TODO Auto-generated method stub
+								
+							}
+						});
+						
+//						keysTable.addMouseListener(new MouseListener() {
+//							
+//							@Override
+//							public void mouseReleased(MouseEvent e) {
+//								// TODO Auto-generated method stub
+//								
+//							}
+//							
+//							@Override
+//							public void mousePressed(MouseEvent e) {
+//								// TODO Auto-generated method stub
+//								
+//							}
+//							
+//							@Override
+//							public void mouseExited(MouseEvent e) {
+//								System.out.println(keysTable.getSelectedRow());
+//							}
+//							
+//							@Override
+//							public void mouseEntered(MouseEvent e) {
+//								int selectRow = keysTable.rowAtPoint(e.getPoint());
+//								System.out.println(selectRow);
+//							}
+//							
+//							@Override
+//							public void mouseClicked(MouseEvent arg0) {
+//								// TODO Auto-generated method stub
+//								
+//							}
+//						});
 					}
 				});
 			}
