@@ -13,11 +13,24 @@ public class Test {
 //		System.out.println(jedis.getDB());
 //		System.out.println(jedis.configGet("databases").get(1));
 		
-		jedis.select(2);
+		jedis.select(0);
 		Set<String> keys = jedis.keys("*");
 //		jedis.type("name");
 		System.out.println(keys);
 //		
 //		System.out.println(jedis.hlen("name"));
+		
+		
+		// String
+		System.out.println("String = " + jedis.get("name"));
+		
+		// hash
+		System.out.println("hash = " + jedis.hgetAll("user"));
+		
+		// list
+		System.out.println("list = " + jedis.lrange("car", 0, 10));
+		
+		// set
+		System.out.println("set = " + jedis.smembers("plant"));
 	}
 }

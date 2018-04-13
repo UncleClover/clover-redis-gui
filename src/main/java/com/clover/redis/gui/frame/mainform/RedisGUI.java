@@ -14,11 +14,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
-import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -40,6 +37,7 @@ import javax.swing.tree.DefaultTreeModel;
 import com.clover.redis.gui.client.RedisClient;
 import com.clover.redis.gui.frame.ServerDialog;
 import com.clover.redis.gui.model.Keys;
+import com.clover.redis.gui.model.Vals;
 
 /**
  * redis gui mainform
@@ -133,8 +131,29 @@ public class RedisGUI {
 		keysTable.setColumnSelectionAllowed(false);
 		keysTable.setEnabled(false);
 		
+		// redis values
 		final JScrollPane vals = new JScrollPane();
 		colPanel.add(vals);
+		
+		// redis values table
+		JTable valsTable = new JTable(tableModel) {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public boolean isCellEditable(int row, int column) {
+				return true;
+			}
+		};
+		valsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		valsTable.setBorder(new LineBorder(SystemColor.BLACK, 1, true));
+		valsTable.setForeground(Color.BLACK);
+		valsTable.setBackground(SystemColor.control);
+		valsTable.setCellSelectionEnabled(false);
+		valsTable.setColumnSelectionAllowed(false);
+		valsTable.setEnabled(false);
 
 		// 新增事件
 		addMenuItem.addActionListener(new ActionListener() {
@@ -193,6 +212,20 @@ public class RedisGUI {
 							}
 						});
 						
+						keysTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+							private static final long serialVersionUID = 1L;
+
+							@Override
+							public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+								if (row == RedisGUI.this.keysRowsNum) {
+									setBackground(new Color(240, 255, 240));
+								} else {
+									setBackground(null);
+								}
+								
+								return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+							}
+						});
 						
 						keys.remove(keysTable);
 						keys.setViewportView(keysTable);
@@ -229,29 +262,38 @@ public class RedisGUI {
 							}
 
 							@Override
-							public void mouseClicked(MouseEvent paramMouseEvent) {
+							public void mouseClicked(MouseEvent e) {
 								// 双击
-								if (paramMouseEvent.getClickCount() == 2) {
-									System.out.println(keysTable.getValueAt(keysTable.rowAtPoint(new Point(paramMouseEvent.getX(), paramMouseEvent.getY())), 0));
-								}
-							}
-						});
-						
-						keysTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-							private static final long serialVersionUID = 1L;
+								if (e.getClickCount() == 2) {
+									Keys queryVals = new Keys();
+									queryVals.setKey(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 0).toString());
+									queryVals.setType(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 1).toString());
+									queryVals.setSize(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 2).toString());
+									List<Vals> valsList = redis.queryVals(queryVals, Integer.parseInt(selectedDB.substring(2)));
+									Object[][] valCols = new Object[valsList.size()][2];
+									for (int i = 0; i < valsList.size(); i++) {
+										valCols[i][0] = valsList.get(i).getColumn();
+										valCols[i][1] = valsList.get(i).getValue();
+									}
+									valsTable.setModel(new DefaultTableModel(valCols, new String[] { "COLUMN", "VALUE" }) {
+										/**
+										 * 
+										 */
+										private static final long serialVersionUID = 1L;
+										@SuppressWarnings("rawtypes")
+										Class[] columnTypes = new Class[] { Object.class, Object.class };
 
-							@Override
-							public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-								if (row == RedisGUI.this.keysRowsNum) {
-									setBackground(new Color(240, 255, 240));
-								} else {
-									setBackground(null);
+										@SuppressWarnings({ "unchecked", "rawtypes" })
+										public Class getColumnClass(int columnIndex) {
+											return columnTypes[columnIndex];
+										}
+									});
+
+									vals.remove(valsTable);
+									vals.setViewportView(valsTable);
 								}
-								
-								return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 							}
 						});
-						
 					}
 				});
 			}
