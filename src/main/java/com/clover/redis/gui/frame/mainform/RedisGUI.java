@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -30,9 +32,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.LineBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
@@ -48,6 +49,7 @@ import com.clover.redis.gui.model.Keys;
  * @time 2018年4月2日 下午8:24:04
  */
 public class RedisGUI {
+	private int keysRowsNum = -1;
 	private JFrame frame;
 	private JMenuBar menubar;
 	private JMenu options;
@@ -129,7 +131,8 @@ public class RedisGUI {
 		keysTable.setBackground(SystemColor.control);
 		keysTable.setCellSelectionEnabled(false);
 		keysTable.setColumnSelectionAllowed(false);
-
+		keysTable.setEnabled(false);
+		
 		final JScrollPane vals = new JScrollPane();
 		colPanel.add(vals);
 
@@ -195,53 +198,60 @@ public class RedisGUI {
 						keys.setViewportView(keysTable);
 						
 						keysTable.addMouseMotionListener(new MouseMotionListener() {
-							
 							@Override
 							public void mouseMoved(MouseEvent e) {
-								int selectRow = keysTable.rowAtPoint(e.getPoint());
-								System.out.println(selectRow);
-								Component comp = keysTable.prepareRenderer(keysTable.getCellRenderer(1, 2), 1, 2);
-								comp.setBackground(Color.RED);
+								RedisGUI.this.keysRowsNum = keysTable.rowAtPoint(e.getPoint());
+								keysTable.updateUI();
 							}
-							
+
 							@Override
 							public void mouseDragged(MouseEvent paramMouseEvent) {
-								// TODO Auto-generated method stub
-								
 							}
 						});
 						
-//						keysTable.addMouseListener(new MouseListener() {
-//							
-//							@Override
-//							public void mouseReleased(MouseEvent e) {
-//								// TODO Auto-generated method stub
-//								
-//							}
-//							
-//							@Override
-//							public void mousePressed(MouseEvent e) {
-//								// TODO Auto-generated method stub
-//								
-//							}
-//							
-//							@Override
-//							public void mouseExited(MouseEvent e) {
-//								System.out.println(keysTable.getSelectedRow());
-//							}
-//							
-//							@Override
-//							public void mouseEntered(MouseEvent e) {
-//								int selectRow = keysTable.rowAtPoint(e.getPoint());
-//								System.out.println(selectRow);
-//							}
-//							
-//							@Override
-//							public void mouseClicked(MouseEvent arg0) {
-//								// TODO Auto-generated method stub
-//								
-//							}
-//						});
+						keysTable.addMouseListener(new MouseListener() {
+							@Override
+							public void mouseReleased(MouseEvent paramMouseEvent) {
+							}
+
+							@Override
+							public void mousePressed(MouseEvent paramMouseEvent) {
+							}
+
+							@Override
+							public void mouseExited(MouseEvent paramMouseEvent) {
+								RedisGUI.this.keysRowsNum = -1;
+								keysTable.updateUI();
+							}
+
+							@Override
+							public void mouseEntered(MouseEvent paramMouseEvent) {
+							}
+
+							@Override
+							public void mouseClicked(MouseEvent paramMouseEvent) {
+								// 双击
+								if (paramMouseEvent.getClickCount() == 2) {
+									System.out.println(keysTable.getValueAt(keysTable.rowAtPoint(new Point(paramMouseEvent.getX(), paramMouseEvent.getY())), 0));
+								}
+							}
+						});
+						
+						keysTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+							private static final long serialVersionUID = 1L;
+
+							@Override
+							public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+								if (row == RedisGUI.this.keysRowsNum) {
+									setBackground(new Color(240, 255, 240));
+								} else {
+									setBackground(null);
+								}
+								
+								return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+							}
+						});
+						
 					}
 				});
 			}
