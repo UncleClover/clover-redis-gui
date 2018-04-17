@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.SystemColor;
@@ -16,6 +17,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -34,6 +36,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
+import com.clover.api.tools.common.utils.StringUtil;
 import com.clover.redis.gui.client.RedisClient;
 import com.clover.redis.gui.frame.ServerDialog;
 import com.clover.redis.gui.model.Keys;
@@ -48,11 +51,23 @@ import com.clover.redis.gui.model.Vals;
  */
 public class RedisGUI {
 	private int keysRowsNum = -1;
+	private int valsRowsNum = -1;
 	private JFrame frame;
 	private JMenuBar menubar;
 	private JMenu options;
 	private JMenuItem open, add;
-
+	private JButton addBtn = new JButton("新增");
+	private JButton del = new JButton("删除");
+	private JButton confirm = new JButton("确定");
+	private JButton cancel = new JButton("取消");
+	private JButton refresh = new JButton("刷新");
+	private JButton addHead = new JButton("添加头部");
+	private JButton addTail = new JButton("添加尾部");
+	private JButton addAssignPoint = new JButton("添加指定位置");
+	private JButton delHead = new JButton("删除头部");
+	private JButton delTail = new JButton("删除尾部");
+	private JButton delAssignPoint = new JButton("删除指定位置");
+	
 	private ServerDialog serverDialog;
 
 	public RedisGUI() {
@@ -131,9 +146,54 @@ public class RedisGUI {
 		keysTable.setColumnSelectionAllowed(false);
 		keysTable.setEnabled(false);
 		
+		// 显示db值的面板分成左右两部分：左值右操作
+		JPanel valpanel = new JPanel();
+		valpanel.setLayout(new BorderLayout(0, 0));
+		colPanel.add(valpanel);
+		
+		// 操作
+		JPanel optPanel = new JPanel();
+		optPanel.setBackground(new Color(224, 255, 255));
+		optPanel.setBorder(new LineBorder(Color.GRAY));
+		optPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+		
+		addBtn.setVisible(false);
+		optPanel.add(addBtn);
+		
+		del.setVisible(false);
+		optPanel.add(del);
+		
+		confirm.setVisible(false);
+		optPanel.add(confirm);
+		
+		cancel.setVisible(false);
+		optPanel.add(cancel);
+		
+		addHead.setVisible(false);
+		optPanel.add(addHead);
+		
+		addTail.setVisible(false);
+		optPanel.add(addTail);
+		
+		addAssignPoint.setVisible(false);
+		optPanel.add(addAssignPoint);
+		
+		delHead.setVisible(false);
+		optPanel.add(delHead);
+		
+		delTail.setVisible(false);
+		optPanel.add(delTail);
+		
+		delAssignPoint.setVisible(false);
+		optPanel.add(delAssignPoint);
+		
+		optPanel.add(refresh);
+		optPanel.setVisible(false);
+		valpanel.add(optPanel, BorderLayout.SOUTH);
+		
 		// redis values
 		final JScrollPane vals = new JScrollPane();
-		colPanel.add(vals);
+		valpanel.add(vals, BorderLayout.CENTER);
 		
 		// redis values table
 		JTable valsTable = new JTable(tableModel) {
@@ -144,6 +204,9 @@ public class RedisGUI {
 			private static final long serialVersionUID = 1L;
 
 			public boolean isCellEditable(int row, int column) {
+				if(column == 0) {
+					return false;
+				}
 				return true;
 			}
 		};
@@ -153,7 +216,6 @@ public class RedisGUI {
 		valsTable.setBackground(SystemColor.control);
 		valsTable.setCellSelectionEnabled(false);
 		valsTable.setColumnSelectionAllowed(false);
-		valsTable.setEnabled(false);
 
 		// 新增事件
 		addMenuItem.addActionListener(new ActionListener() {
@@ -265,9 +327,11 @@ public class RedisGUI {
 							public void mouseClicked(MouseEvent e) {
 								// 双击
 								if (e.getClickCount() == 2) {
+									optPanel.setVisible(true);
 									Keys queryVals = new Keys();
+									String type = keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 1).toString();
 									queryVals.setKey(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 0).toString());
-									queryVals.setType(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 1).toString());
+									queryVals.setType(type);
 									queryVals.setSize(keysTable.getValueAt(keysTable.rowAtPoint(new Point(e.getX(), e.getY())), 2).toString());
 									List<Vals> valsList = redis.queryVals(queryVals, Integer.parseInt(selectedDB.substring(2)));
 									Object[][] valCols = new Object[valsList.size()][2];
@@ -275,6 +339,7 @@ public class RedisGUI {
 										valCols[i][0] = valsList.get(i).getColumn();
 										valCols[i][1] = valsList.get(i).getValue();
 									}
+									
 									valsTable.setModel(new DefaultTableModel(valCols, new String[] { "COLUMN", "VALUE" }) {
 										/**
 										 * 
@@ -288,7 +353,22 @@ public class RedisGUI {
 											return columnTypes[columnIndex];
 										}
 									});
+									
+									valsTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+										private static final long serialVersionUID = 1L;
 
+										@Override
+										public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+											if (row == RedisGUI.this.valsRowsNum) {
+												setBackground(new Color(240, 255, 240));
+											} else {
+												setBackground(null);
+											}
+											
+											return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+										}
+									});
+									setButtonEnableByType(type);
 									vals.remove(valsTable);
 									vals.setViewportView(valsTable);
 								}
@@ -300,6 +380,80 @@ public class RedisGUI {
 		});
 	}
 
+	/**
+	 * 根据redis数据库类型设置按钮是否可用
+	 * 
+	 * @author zhangdq
+	 * @Email qiang900714@126.com
+	 * @time 2018年4月17日 下午2:28:35
+	 * @param type
+	 */
+	private void setButtonEnableByType(String type) {
+		if (StringUtil.isEmpty(type)) {
+			return;
+		}
+
+		switch (type) {
+		case "string":
+			addHead.setVisible(false);
+			addTail.setVisible(false);
+			addAssignPoint.setVisible(false);
+			delHead.setVisible(false);
+			delTail.setVisible(false);
+			delAssignPoint.setVisible(false);
+			addBtn.setVisible(false);
+			del.setVisible(false);
+			confirm.setVisible(true);
+			cancel.setVisible(true);
+			refresh.setVisible(false);
+			break;
+			
+		case "list":
+			addBtn.setVisible(false);
+			del.setVisible(false);
+			confirm.setVisible(true);
+			cancel.setVisible(true);
+			refresh.setVisible(false);
+			addHead.setVisible(true);
+			addTail.setVisible(true);
+			addAssignPoint.setVisible(true);
+			delHead.setVisible(true);
+			delTail.setVisible(true);
+			delAssignPoint.setVisible(true);
+			break;
+			
+		case "set":
+			addHead.setVisible(false);
+			addTail.setVisible(false);
+			addAssignPoint.setVisible(false);
+			delHead.setVisible(false);
+			delTail.setVisible(false);
+			delAssignPoint.setVisible(false);
+			addBtn.setVisible(true);
+			del.setVisible(true);
+			confirm.setVisible(false);
+			cancel.setVisible(false);
+			refresh.setVisible(true);
+			break;
+			
+		case "hash":
+			addHead.setVisible(false);
+			addTail.setVisible(false);
+			addAssignPoint.setVisible(false);
+			delHead.setVisible(false);
+			delTail.setVisible(false);
+			delAssignPoint.setVisible(false);
+			addBtn.setVisible(true);
+			del.setVisible(true);
+			confirm.setVisible(true);
+			cancel.setVisible(true);
+			refresh.setVisible(true);
+			break;
+			
+		default:
+			break;
+		}
+	}
 	public static void main(String[] args) {
 		new RedisGUI().frame.setVisible(true);
 	}
