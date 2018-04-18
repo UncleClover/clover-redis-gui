@@ -29,6 +29,8 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.LineBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -52,6 +54,8 @@ import com.clover.redis.gui.model.Vals;
 public class RedisGUI {
 	private int keysRowsNum = -1;
 	private int valsRowsNum = -1;
+	private String oldValue = "";
+	private String newValue = "";
 	private JFrame frame;
 	private JMenuBar menubar;
 	private JMenu options;
@@ -210,6 +214,7 @@ public class RedisGUI {
 				return true;
 			}
 		};
+		
 		valsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		valsTable.setBorder(new LineBorder(SystemColor.BLACK, 1, true));
 		valsTable.setForeground(Color.BLACK);
@@ -368,6 +373,38 @@ public class RedisGUI {
 											return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 										}
 									});
+									
+									
+									// 鼠标事件
+									valsTable.addMouseListener(new MouseListener() {
+										
+										@Override
+										public void mouseReleased(MouseEvent e) {}
+										
+										@Override
+										public void mousePressed(MouseEvent e) {}
+										
+										@Override
+										public void mouseExited(MouseEvent e) {}
+										
+										@Override
+										public void mouseEntered(MouseEvent e) {}
+										
+										@Override
+										public void mouseClicked(MouseEvent e) {
+											RedisGUI.this.oldValue = valsTable.getValueAt(valsTable.getSelectedRow(), valsTable.getSelectedColumn()).toString();
+										}
+									});
+									
+									// 数值改变事件，只有失去焦点才会触发
+									valsTable.getModel().addTableModelListener(new TableModelListener() {
+										
+										@Override
+										public void tableChanged(TableModelEvent e) {
+											RedisGUI.this.newValue = valsTable.getValueAt(e.getLastRow(), e.getColumn()).toString();
+										}
+									});
+									
 									setButtonEnableByType(type);
 									vals.remove(valsTable);
 									vals.setViewportView(valsTable);
@@ -454,6 +491,7 @@ public class RedisGUI {
 			break;
 		}
 	}
+	
 	public static void main(String[] args) {
 		new RedisGUI().frame.setVisible(true);
 	}
